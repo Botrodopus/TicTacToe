@@ -1,0 +1,414 @@
+/*
+  This version has the computer take a turn after a player does
+  Computer square selections are random for now
+  Puts every move into a 3x3 2D Array
+  Human always goes first
+  checks for winner
+*/
+
+#include <Servo.h> // include the Servo library
+//LED's
+int r1 = 53;  //red LEDs
+int r2 = 51;
+int r3 = 49;
+int r4 = 47;
+int r5 = 45;
+int r6 = 43;
+int r7 = 41;
+int r8 = 39;
+int r9 = 37;
+
+int b1 = 52;  //blue LEDs
+int b2 = 50;
+int b3 = 48;
+int b4 = 46;
+int b5 = 44;
+int b6 = 42;
+int b7 = 40;
+int b8 = 38;
+int b9 = 36;
+
+//buttons
+int s1 = 2; //button with their respective pin
+int s2 = 3;
+int s3 = 4;
+int s4 = 5;
+int s5 = 6;
+int s6 = 7;
+int s7 = 8;
+int s8 = 9;
+int s9 = 10;
+
+int button1;  //declare buttons for buttonState later on
+int button2;
+int button3;
+int button4;
+int button5;
+int button6;
+int button7;
+int button8;
+int button9;
+
+void(* resetFunc) (void) = 0;//declare reset function at address 0
+char board[3][3];  //3x3 array that will be filled as game goes
+long randomNumber;   //used for generating random computer move
+bool used[9] = {false,false,false,false,false,false,false,false,false};
+bool winner;
+Servo myservo;
+
+void setup() {
+    //output LEDs
+  Serial.begin(9600);
+  pinMode(r1, OUTPUT);
+  pinMode(b1, OUTPUT);
+  pinMode(r2, OUTPUT);
+  pinMode(b2, OUTPUT);
+  pinMode(r3, OUTPUT);
+  pinMode(b3, OUTPUT);
+  pinMode(r4, OUTPUT);
+  pinMode(b4, OUTPUT);
+  pinMode(r5, OUTPUT);
+  pinMode(b5, OUTPUT);
+  pinMode(r6, OUTPUT);
+  pinMode(b6, OUTPUT);
+  pinMode(r7, OUTPUT);
+  pinMode(b7, OUTPUT);
+  pinMode(r8, OUTPUT);
+  pinMode(b8, OUTPUT);
+  pinMode(r9, OUTPUT);
+  pinMode(b9, OUTPUT);
+    //input buttons
+  pinMode(s1,INPUT);
+  pinMode(s2,INPUT);
+  pinMode(s3,INPUT);
+  pinMode(s4,INPUT);
+  pinMode(s5,INPUT);
+  pinMode(s6,INPUT);
+  pinMode(s7,INPUT);
+  pinMode(s8,INPUT);
+  pinMode(s9,INPUT);
+  Serial.begin(9600);
+    //servo
+  myservo.attach(11); //pin 11
+  myservo.write(90);  //start at 90 degrees  
+    //print empty board
+  setUpBoard();
+  randomSeed(analogRead(0));
+}
+
+    //Main Loop
+void loop() {
+  button1= digitalRead(s1);
+  button2= digitalRead(s2);
+  button3= digitalRead(s3);
+  button4= digitalRead(s4);
+  button5= digitalRead(s5);
+  button6= digitalRead(s6);
+  button7= digitalRead(s7);
+  button8= digitalRead(s8);
+  button9= digitalRead(s9);
+
+//check for button press
+  if(button1 == HIGH && checkDuplicate(1) == false){
+      delay(150);
+      digitalWrite(r1, HIGH);
+      board[0][0] = 'x';
+      printBoard();
+      updateNumberLine(1);
+      used[0] = true;
+      checkWinner();
+      delay(1500);
+      computerTurn();
+  }
+
+  if(button2 == HIGH && checkDuplicate(2) == false){
+    delay(150);
+    digitalWrite(r2, HIGH);
+    board[0][1] = 'x';
+    printBoard();
+    updateNumberLine(2);
+    used[1] = true;
+    checkWinner();
+    delay(1500);
+    computerTurn();
+  }
+
+  if(button3 == HIGH && checkDuplicate(3) == false){
+    delay(150);
+    digitalWrite(r3, HIGH);
+    board[0][2] = 'x';
+    printBoard();
+    updateNumberLine(3);
+    used[2] = true;
+    checkWinner();
+    delay(1500);
+    computerTurn();
+  }
+  
+  if(button4 == HIGH && checkDuplicate(4) == false){
+    delay(150);
+    digitalWrite(r4, HIGH);
+    board[1][0] = 'x';
+    printBoard();
+    updateNumberLine(4);
+    used[3] = true;
+    checkWinner(); 
+    delay(1500);
+    computerTurn();
+  }
+
+  if(button5 == HIGH && checkDuplicate(5) == false){
+    delay(150);
+    digitalWrite(r5, HIGH);
+    board[1][1] = 'x';
+    printBoard();
+    updateNumberLine(5);
+    used[4] = true;
+    checkWinner();
+    delay(1500);
+    computerTurn();
+  }
+
+  if(button6 == HIGH && checkDuplicate(6) == false){
+    delay(150);
+    digitalWrite(r6, HIGH);
+    board[1][2] = 'x';
+    printBoard();
+    updateNumberLine(6);
+    used[5] = true;
+    checkWinner();
+    delay(1500);
+    computerTurn();  
+  } 
+
+  if(button7 == HIGH && checkDuplicate(7) == false){
+    delay(150);
+    digitalWrite(r7, HIGH);
+    board[2][0] = 'x';
+    printBoard();
+    updateNumberLine(7);
+    used[6] = true;
+    checkWinner();
+    delay(1500);
+    computerTurn();
+  }
+
+  if(button8 == HIGH && checkDuplicate(8) == false){
+    delay(150);
+    digitalWrite(r8, HIGH);
+    board[2][1] = 'x';
+    printBoard();
+    updateNumberLine(8);
+    used[7] = true;
+    checkWinner();
+    delay(1500);
+    computerTurn();
+  }
+
+  if(button9 == HIGH && checkDuplicate(9) == false){
+    delay(150);
+    digitalWrite(r9, HIGH);
+    board[2][2] = 'x';
+    printBoard();
+    updateNumberLine(9);
+    used[8] = true;
+    checkWinner();
+    delay(1500);
+    computerTurn();
+  }     
+}
+
+//Methods
+    //Set up blank board 
+void setUpBoard(){
+  for(int i=0; i<3; i++){
+      for(int j=0; j<3; j++){
+         board[i][j] = '-';
+      }
+  }
+  printBoard();
+}
+    //print board 
+void printBoard(){
+  Serial.println();
+  Serial.print(board[0][0]);
+  Serial.print(board[0][1]);
+  Serial.println(board[0][2]);
+  Serial.print(board[1][0]);
+  Serial.print(board[1][1]);
+  Serial.println(board[1][2]);
+  Serial.print(board[2][0]);
+  Serial.print(board[2][1]);
+  Serial.println(board[2][2]);
+  Serial.println();
+}
+
+int numberLine[10] = {1,2,3,4,5,6,7,8,9,0};
+//Computer Methods
+void updateNumberLine(int num){
+  for(int i=0; i< 10; i++){
+    if(numberLine[i] == num){
+      for(int j=i; j<10-1; j++){
+        numberLine[j] = numberLine[j+1];
+        }
+    }
+    
+    if(numberLine[i] == numberLine[i+1]){
+      numberLine[i+1] = 0;
+      break;
+    }
+    
+  }
+  Serial.println();
+  for(int i = 0; i < 9; i++){
+    Serial.print(numberLine[i]);
+  }
+}
+
+void computerTurn(){
+  int turnIndex;
+  int maxi;
+  for(int i=0; i<10-1; i++){              //find index of max number left on board
+    if (numberLine[i+1] > numberLine[i])
+      maxi = i;
+  }
+  turnIndex = random(0,maxi);       //computer chooses random number between index 0 and index of max
+  int guess = numberLine[turnIndex];
+  Serial.println();
+
+  if(guess == 1){
+    board[0][0] = 'o';
+    digitalWrite(b1, HIGH);
+  }
+  if(guess == 2){
+    board[0][1] = 'o';
+    digitalWrite(b2, HIGH);
+  }
+  if(guess == 3){
+    board[0][2] = 'o';
+    digitalWrite(b3, HIGH);
+  }
+  if(guess == 4){
+    board[1][0] = 'o';
+    digitalWrite(b4, HIGH);
+  }
+  if(guess == 5){
+    board[1][1] = 'o';
+    digitalWrite(b5, HIGH);
+  }
+  if(guess == 6){
+    board[1][2] = 'o';
+    digitalWrite(b6, HIGH);
+  }
+  if(guess == 7){
+    board[2][0] = 'o';
+    digitalWrite(b7, HIGH);
+  }
+  if(guess == 8){
+    board[2][1] = 'o';
+    digitalWrite(b8, HIGH);
+  }
+  if(guess == 9){
+    board[2][2] = 'o';
+    digitalWrite(b9, HIGH);
+  }
+
+  printBoard();
+  Serial.print("guess: ");
+  Serial.println(guess);
+  updateNumberLine(guess);
+  checkWinner();
+}
+
+void checkWinner(){
+  for(int i=0; i<3; i++){     
+    if(board[i][0]==board[i][1] && board[i][0]==board[i][2]){ //check horizontal rows
+      if(board[i][0] == 'x'){
+        playerWon();
+      }
+      if(board[i][0] == 'o'){
+        compWon();
+      }  
+    }
+    if(board[0][i]==board[1][i] && board[0][i]==board[2][i]){ //check vertical rows
+      if(board[0][i] == 'x'){
+        playerWon();
+      }
+      if(board[0][i] == 'o'){
+        compWon();
+      }
+    }
+  }
+  if(board[0][0]==board[1][1] && board[1][1]==board[2][2]){ //check diagonal from top left
+     if(board[1][1] == 'x'){
+        playerWon();
+      }
+      if(board[1][1] == 'o'){
+        compWon();
+      }
+  }
+  if(board[0][2]==board[1][1] && board[1][1]==board[2][0]){ //check diagonal from top right
+     if(board[1][1] == 'x'){
+        playerWon();
+      }
+      if(board[1][1] == 'o'){
+        compWon();
+      }
+  }
+}
+
+//Somebody won
+void playerWon(){
+  Serial.println();
+  Serial.println("player wins");
+  myservo.write(180);  
+  delay(6000);
+  turnLightsOff();
+  resetFunc();
+}
+
+void compWon(){
+  Serial.println();
+  Serial.println("computer wins");
+  myservo.write(0);  
+  delay(6000);
+  turnLightsOff();
+  resetFunc();
+}
+
+bool checkDuplicate(int choice){
+//  for(int k=0; k<9; k++){
+//    if(choice == used[k]){
+//      delay(150);
+//      Serial.println();
+//      Serial.println("already used");
+//      return true;  
+//    }
+//  }
+  return false;
+}
+
+void turnLightsOff(){
+  //reset lights
+  digitalWrite(r1, LOW);
+  digitalWrite(r2, LOW);
+  digitalWrite(r3, LOW);
+  digitalWrite(r4, LOW);
+  digitalWrite(r5, LOW);
+  digitalWrite(r6, LOW);
+  digitalWrite(r7, LOW);
+  digitalWrite(r8, LOW);
+  digitalWrite(r9, LOW);
+  delay(250);
+  digitalWrite(b1, LOW);
+  digitalWrite(b2, LOW);
+  digitalWrite(b3, LOW);
+  digitalWrite(b4, LOW);
+  digitalWrite(b5, LOW);
+  digitalWrite(b6, LOW);
+  digitalWrite(b7, LOW);
+  digitalWrite(b8, LOW);
+  digitalWrite(b9, LOW);
+  //reset servo
+  //myservo.write(90);  
+}
